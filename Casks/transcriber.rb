@@ -1,8 +1,8 @@
 # Template for Casks/transcriber.rb in ShiSheng233/homebrew-tap.
-# `make release-cask` fills in 1.2 and 189d3c37cb53d16e96bb2692cc72464efb603e96b05f6e56b8d1812dde69ae21; see docs/RELEASING.md.
+# `make release-cask` fills in 1.3 and c93b3eade2d8ba83b90be5dcdae721eebe6c83df96f9fbb16aac115ff9514aa2; see docs/RELEASING.md.
 cask "transcriber" do
-  version "1.2"
-  sha256 "189d3c37cb53d16e96bb2692cc72464efb603e96b05f6e56b8d1812dde69ae21"
+  version "1.3"
+  sha256 "c93b3eade2d8ba83b90be5dcdae721eebe6c83df96f9fbb16aac115ff9514aa2"
 
   url "https://github.com/ShiSheng233/Transcriber/releases/download/v#{version}/Transcriber-#{version}.zip"
   name "Transcriber"
