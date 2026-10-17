@@ -1,0 +1,24 @@
+---
+icon: ./transcriber.png
+description: Generate, edit and translate subtitles on your Mac with Whisper models, then polish or translate them with any OpenAI-compatible API.
+---
+
+## About
+
+Transcriber turns audio and video into subtitles on your Mac. Recognition runs locally with Whisper
+models on the GPU and the Neural Engine; an optional last step sends the subtitles to a language model
+of your choice to polish or translate them.
+
+- Queue several files.
+- Edit the result in the built-in subtitle editor and re-transcribe a range.
+- Export to the usual subtitle formats.
+
+## Models
+
+Models are not bundled with the app. Put them in the models folder set in Settings, by default
+`~/Library/Application Support/Transcriber/Models`.
+
+<Aside title="Language model API keys">
+  Keys for the language model step are stored in your login keychain, so `brew uninstall --zap` leaves
+  them in place.
+</Aside>

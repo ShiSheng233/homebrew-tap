@@ -1,0 +1,49 @@
+---
+import type { ImageMetadata } from 'astro';
+
+// The app icon from content/<token>.mdx, or the name's first letter on a tile when there is none.
+interface Props {
+  name: string;
+  icon?: ImageMetadata;
+  size: number;
+}
+
+const { name, icon, size } = Astro.props;
+---
+
+{
+  icon ? (
+    <img class="app-icon" src={icon.src} width={size} height={size} alt="" />
+  ) : (
+    <span class="app-icon app-icon--letter" style={`--size: ${size}px`} aria-hidden="true">
+      <span>{name.charAt(0)}</span>
+    </span>
+  )
+}
+
+<style>
+  .app-icon {
+    flex: none;
+    display: block;
+  }
+
+  /* Inset like a macOS icon's artwork inside its canvas, so tiles and icons line up. */
+  .app-icon--letter {
+    display: grid;
+    width: var(--size);
+    height: var(--size);
+    padding: calc(var(--size) * 0.1);
+  }
+
+  .app-icon--letter span {
+    display: grid;
+    place-items: center;
+    border-radius: 22.5%;
+    /* Translucent ink, so the tile shows on the page and on gray panels alike. */
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink-muted);
+    font-size: calc(var(--size) * 0.36);
+    font-weight: 600;
+    line-height: 1;
+  }
+</style>

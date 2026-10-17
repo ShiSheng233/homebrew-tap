@@ -1,0 +1,147 @@
+---
+import { getCollection } from 'astro:content';
+import AppIcon from '../components/AppIcon.astro';
+import Command from '../components/Command.astro';
+import Base from '../layouts/Base.astro';
+import { requirementLabels } from '../lib/cask';
+import { loadCasks } from '../lib/casks';
+import { tap } from '../lib/site';
+
+const casks = await loadCasks();
+const pages = await getCollection('casks');
+const iconOf = (token: string) => pages.find((page) => page.id === token)?.data.icon;
+---
+
+<Base description={`Software maintained by ${tap.author} for Homebrew: ${casks.map((cask) => cask.name).join(', ')}.`}>
+  <div class="home">
+    <header class="hero">
+      <h1>Homebrew Tap</h1>
+      <div class="hero__command">
+        <Command command={`brew tap ${tap.name}`} />
+      </div>
+    </header>
+
+    <section aria-labelledby="packages">
+      <h2 id="packages">Packages</h2>
+      <ul class="packages">
+        {casks.map((cask) => (
+          <li>
+            <a href={`/${cask.token}`} class="package">
+              <AppIcon name={cask.name} icon={iconOf(cask.token)} size={64} />
+              <span class="package__text">
+                <span class="package__title">
+                  {cask.name} <span class="package__version">{cask.version}</span>
+                </span>
+                <span class="package__desc">{cask.desc}</span>
+                <span class="package__meta">{requirementLabels(cask).join(' · ')}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .home {
+    max-width: calc(var(--page-width) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: clamp(3rem, 9vh, 5.5rem) var(--gutter) 0;
+  }
+
+  .hero {
+    margin-bottom: 4rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 3rem;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+
+  .hero__command {
+    max-width: 26rem;
+    margin-top: 1.5rem;
+  }
+
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.35rem;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+  }
+
+  .packages {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .package {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    height: 100%;
+    padding: 1.1rem 1.25rem 1.2rem 1rem;
+    border-radius: var(--radius);
+    background: var(--bg-raised);
+    color: var(--ink);
+    transition: background-color 150ms ease-out;
+  }
+
+  .package:hover {
+    text-decoration: none;
+    background: color-mix(in srgb, var(--ink) 4%, var(--bg-raised));
+  }
+
+  .package__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    padding-top: 0.35rem;
+  }
+
+  .package__title {
+    font-weight: 600;
+    font-size: 1.06rem;
+    line-height: 1.3;
+  }
+
+  .package__version {
+    margin-left: 0.2rem;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+
+  .package__desc {
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .package__meta {
+    margin-top: 0.3rem;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 520px) {
+    h1 {
+      font-size: 2.3rem;
+    }
+
+    .hero {
+      margin-bottom: 3rem;
+    }
+
+    .package {
+      border-radius: 14px;
+    }
+  }
+</style>

@@ -1,0 +1,233 @@
+---
+import { getCollection, render } from 'astro:content';
+import AppIcon from '../components/AppIcon.astro';
+import Aside from '../components/Aside.astro';
+import Command from '../components/Command.astro';
+import CaskLayout from '../layouts/CaskLayout.astro';
+import { requirementLabels, type Artifact } from '../lib/cask';
+import { loadCasks } from '../lib/casks';
+import { caskSourceURL, tap } from '../lib/site';
+
+export async function getStaticPaths() {
+  const casks = await loadCasks();
+  const pages = await getCollection('casks');
+  const orphan = pages.find((page) => !casks.some((cask) => cask.token === page.id));
+  if (orphan) throw new Error(`content/${orphan.id}.mdx has no matching Casks/${orphan.id}.rb`);
+  return casks.map((cask) => ({
+    params: { token: cask.token },
+    props: { cask, casks, page: pages.find((page) => page.id === cask.token) },
+  }));
+}
+
+const { cask, casks, page } = Astro.props;
+const { Content, headings: pageHeadings } = page ? await render(page) : { Content: undefined, headings: [] };
+
+const headings = [
+  { depth: 2, slug: 'install', text: 'Install' },
+  ...pageHeadings,
+  { depth: 2, slug: 'details', text: 'Details' },
+  { depth: 2, slug: 'update-and-uninstall', text: 'Update and uninstall' },
+];
+
+const qualifiedToken = `${tap.name}/${cask.token}`;
+const requirements = requirementLabels(cask);
+const download = new URL(cask.url);
+const downloadName = decodeURIComponent(download.pathname.split('/').pop() ?? download.hostname);
+
+function describe(artifact: Artifact): string {
+  switch (artifact.kind) {
+    case 'app':
+      return `${artifact.name} in Applications`;
+    case 'suite':
+      return `${artifact.name} folder in Applications`;
+    case 'binary':
+      return `${artifact.name} command`;
+    case 'pkg':
+      return `${artifact.name} installer package`;
+  }
+}
+---
+
+<CaskLayout casks={casks} current={cask} description={page?.data.description ?? cask.desc} headings={headings}>
+  <header class="cask-header" slot="header">
+    <div class="cask-header__title">
+      <AppIcon name={cask.name} icon={page?.data.icon} size={64} />
+      <h1>{cask.name}</h1>
+    </div>
+    <p class="cask-header__desc">{cask.desc}</p>
+    <ul class="cask-header__facts">
+      {[`Version ${cask.version}`, ...requirements].map((fact) => <li>{fact}</li>)}
+    </ul>
+  </header>
+
+  <h2 id="install">Install</h2>
+  <Command command={`brew install --cask ${qualifiedToken}`} />
+
+  {Content && <Content components={{ Aside, Command }} />}
+
+  <h2 id="details">Details</h2>
+  <dl class="details">
+    <div>
+      <dt>Version</dt>
+      <dd>{cask.version}</dd>
+    </div>
+    {requirements.length > 0 && (
+      <div>
+        <dt>Requires</dt>
+        <dd>{requirements.join(', ')}</dd>
+      </div>
+    )}
+    {cask.artifacts.length > 0 && (
+      <div>
+        <dt>Installs</dt>
+        <dd>{cask.artifacts.map(describe).join(', ')}</dd>
+      </div>
+    )}
+    <div>
+      <dt>Homepage</dt>
+      <dd><a href={cask.homepage}>{cask.homepage.replace(/^https?:\/\//, '')}</a></dd>
+    </div>
+    <div>
+      <dt>Download</dt>
+      <dd><a href={cask.url}>{downloadName}</a> <span class="muted">from {download.hostname}</span></dd>
+    </div>
+    <div>
+      <dt>SHA-256</dt>
+      <dd><code class="hash">{cask.sha256}</code></dd>
+    </div>
+    <div>
+      <dt>Cask</dt>
+      <dd><a href={caskSourceURL(cask.token)}>Casks/{cask.token}.rb</a></dd>
+    </div>
+  </dl>
+
+  <h2 id="update-and-uninstall">Update and uninstall</h2>
+  <p>Update to the latest version:</p>
+  <Command command={`brew upgrade --cask ${cask.token}`} />
+  <p>Remove the app:</p>
+  <Command command={`brew uninstall --cask ${cask.token}`} />
+  {cask.zapPaths.length > 0 && (
+    <>
+      <p>Remove the app and everything it keeps on disk:</p>
+      <Command command={`brew uninstall --zap --cask ${cask.token}`} />
+      <p class="hint">This also deletes:</p>
+      <ul class="paths">
+        {cask.zapPaths.map((path) => <li><code>{path}</code></li>)}
+      </ul>
+    </>
+  )}
+</CaskLayout>
+
+<style>
+  .cask-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .cask-header__title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 0 0.75rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+
+  .cask-header__desc {
+    margin: 0 0 0.9rem;
+    font-size: 1.2rem;
+    line-height: 1.4;
+    letter-spacing: -0.008em;
+  }
+
+  .cask-header__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cask-header__facts li {
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: var(--bg-raised);
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+  }
+
+  .hint {
+    color: var(--ink-muted);
+    font-size: 0.94rem;
+  }
+
+  .details {
+    margin: 0;
+    border-radius: var(--radius);
+    background: var(--bg-raised);
+    overflow: hidden;
+  }
+
+  .details div {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 1rem;
+    margin-left: 1.25rem;
+    padding: 0.8rem 1.25rem 0.8rem 0;
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+
+  .details div + div {
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  dt {
+    color: var(--ink-muted);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .muted {
+    color: var(--ink-muted);
+  }
+
+  .hash {
+    font-size: 0.8rem;
+    word-break: break-all;
+  }
+
+  .paths {
+    list-style: none;
+    padding: 0 !important;
+  }
+
+  .paths li {
+    margin-bottom: 0.25rem;
+    color: var(--ink-muted);
+    font-size: 0.94rem;
+  }
+
+  @media (max-width: 520px) {
+    h1 {
+      font-size: 2.1rem;
+    }
+
+    .details {
+      border-radius: 14px;
+    }
+
+    .details div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.1rem;
+    }
+  }
+</style>

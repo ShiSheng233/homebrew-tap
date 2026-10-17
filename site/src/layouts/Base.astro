@@ -1,0 +1,168 @@
+---
+import Mark from '../components/Mark.astro';
+import { tap } from '../lib/site';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const path = Astro.url.pathname.replace(/\.html$/, '');
+const pageTitle = title ? `${title} · ${tap.name}` : `${tap.name} · Homebrew Tap`;
+const year = new Date().getUTCFullYear();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href={new URL(path === '/' ? '/' : path, Astro.site)} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="/" aria-label={`${tap.name} home`}>
+          <Mark size={24} />
+          <span>{tap.name}</span>
+        </a>
+        <nav aria-label="Site">
+          <a href={tap.repository}>
+            GitHub
+            <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+              <path d="M3 9l6-6M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>
+          Maintained by {tap.author}. Source on <a href={tap.repository}>GitHub</a>.
+        </p>
+        <p class="site-footer__fine">
+          &copy; {year} {tap.author}. Homebrew is a project of its own maintainers; this tap is not part of it.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Copy buttons on command blocks.
+      document.addEventListener('click', async (event) => {
+        const button = (event.target as Element).closest<HTMLButtonElement>('button[data-copy]');
+        if (!button) return;
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy ?? '');
+        } catch {
+          return;
+        }
+        const label = button.querySelector('span');
+        if (!label) return;
+        label.textContent = 'Copied';
+        window.setTimeout(() => (label.textContent = 'Copy'), 1500);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: calc(var(--page-width) + 2 * var(--gutter));
+    height: var(--header-height);
+    margin: 0 auto;
+    padding: 0 max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left));
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  .brand:hover {
+    text-decoration: none;
+  }
+
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    color: var(--ink-muted);
+    font-size: 0.88rem;
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
+  }
+
+  nav a:hover {
+    color: var(--ink);
+    background: var(--bg-raised);
+    text-decoration: none;
+  }
+
+  main {
+    flex: 1;
+  }
+
+  .site-footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule-soft);
+    background: var(--bg-raised);
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .site-footer__inner {
+    max-width: calc(var(--page-width) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: 1.5rem max(var(--gutter), env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom))
+      max(var(--gutter), env(safe-area-inset-left));
+  }
+
+  .site-footer p {
+    margin: 0 0 0.35rem;
+  }
+
+  .site-footer__fine {
+    max-width: var(--measure);
+  }
+</style>

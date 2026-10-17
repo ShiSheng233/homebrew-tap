@@ -1,0 +1,33 @@
+---
+// A note set apart from the text, for use in content/*.mdx as <Aside title="…">…</Aside>.
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+---
+
+<aside class="aside">
+  {title && <p class="aside__title">{title}</p>}
+  <slot />
+</aside>
+
+<style>
+  .aside {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-small);
+    background: var(--bg-raised);
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .aside__title {
+    margin: 0 0 0.3rem;
+    font-weight: 600;
+  }
+
+  .aside > :global(:last-child) {
+    margin-bottom: 0;
+  }
+</style>
